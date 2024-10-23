@@ -1,0 +1,20 @@
+{
+  "name": "com.cqf.camerafade",
+  "version": "1.0.0",
+  "displayName": "URP Camera Fade",
+  "description": "Render feature to fade the camera color to or from a color. Render graph support is available for Unity 6",
+  "unity": "2022.3",
+  "unityRelease": "18f1",
+  "dependencies": {
+    "com.unity.render-pipelines.universal": ""
+  },
+  "keywords": [
+    "camera",
+    "fade"
+  ],
+  "author": {
+    "name": "Cristian Qiu F\u00e9lez",
+    "email": "cristianqiufelez@gmail.com",
+    "url": "http://cristianqiu.github.io/web"
+  }
+}
