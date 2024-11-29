@@ -1,5 +1,5 @@
 {
-    "name": "com.cqf.urpcamerafade.runtime",
+    "name": "com.cqf.urpfullscreenblur.runtime",
     "rootNamespace": "",
     "references": [
         "Unity.RenderPipelines.Core.Runtime",
