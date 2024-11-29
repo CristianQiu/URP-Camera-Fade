@@ -1,32 +1,33 @@
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// Volume component for the full screen blur.
+/// Volume component for the camera fade.
 /// </summary>
 #if UNITY_2023_1_OR_NEWER
-[VolumeComponentMenu("Custom/FullScreenBlur")]
+[VolumeComponentMenu("Custom/Camera Fade")]
 #if UNITY_6000_0_OR_NEWER
-[VolumeRequiresRendererFeatures(typeof(FullScreenBlurRendererFeature))]
+[VolumeRequiresRendererFeatures(typeof(CameraFadeRendererFeature))]
 #endif
 [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-[VolumeComponentMenuForRenderPipeline("Custom/FullScreenBlur", typeof(UniversalRenderPipeline))]
+[VolumeComponentMenuForRenderPipeline("Custom/Camera Fade", typeof(UniversalRenderPipeline))]
 #endif
-public sealed class FullScreenBlurVolumeComponent : VolumeComponent, IPostProcessComponent
+public sealed class CameraFadeVolumeComponent : VolumeComponent, IPostProcessComponent
 {
 	#region Public Attributes
 
+	public ColorParameter color = new ColorParameter(Color.black, false, false, false, false);
 	public ClampedFloatParameter progress = new ClampedFloatParameter(0.0f, 0.0f, 1.0f);
-	public ClampedIntParameter blurRadius = new ClampedIntParameter(8, 2, 32);
 
 	#endregion
 
 	#region Initialization Methods
 
-	public FullScreenBlurVolumeComponent() : base()
+	public CameraFadeVolumeComponent() : base()
 	{
-		displayName = "FullScreenBlur";
+		displayName = "Camera Fade";
 	}
 
 	#endregion

@@ -1,37 +1,26 @@
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 #if UNITY_6000_0_OR_NEWER
-using System;
 using UnityEngine.Rendering.RenderGraphModule;
 #endif
 
 /// <summary>
-/// The full screen blur render pass render pass.
+/// The camera fade render pass.
 /// </summary>
-public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
+public sealed class CameraFadeRenderPass : ScriptableRenderPass
 {
 	#region Definitions
 
 #if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
-	/// Stages from the render pass.
-	/// </summary>
-	private enum PassStage
-	{
-		HorizontalBlur,
-		VerticalBlur,
-	}
-
-	/// <summary>
-	/// Holds the data needed by the execution of the full screen blur render pass subpasses.
+	/// Holds the data needed by the execution of the camera fade render pass subpasses.
 	/// </summary>
 	private class PassData
 	{
-		public PassStage stage;
-
 		public TextureHandle target;
 		public TextureHandle source;
 
@@ -47,26 +36,26 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 
 	#region Private Attributes
 
-	private static readonly int KernelRadiusId = Shader.PropertyToID("_BlurKernelRadius");
-	private static readonly int BlurStandardDeviationId = Shader.PropertyToID("_BlurStandardDeviation");
+	private static readonly int ColorId = Shader.PropertyToID("_Color");
+	private static readonly int ProgressId = Shader.PropertyToID("_Progress");
 
-	private Material fullScreenBlurMaterial;
+	private Material cameraFadeMaterial;
 	private RTHandle blitRtHandle;
 
 	#endregion
 
 	#region Initialization Methods
 
-	public FullScreenBlurRenderPass(Material fullScreenBlurMaterial) : base()
+	public CameraFadeRenderPass(Material cameraFadeMaterial) : base()
 	{
-		profilingSampler = new ProfilingSampler("Full Screen Blur");
+		profilingSampler = new ProfilingSampler("Camera Fade");
 		renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
 #if UNITY_6000_0_OR_NEWER
 		requiresIntermediateTexture = false;
 #endif
 
-		this.fullScreenBlurMaterial = fullScreenBlurMaterial;
+		this.cameraFadeMaterial = cameraFadeMaterial;
 	}
 
 	#endregion
@@ -78,9 +67,6 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="cmd"></param>
 	/// <param name="renderingData"></param>
-#if UNITY_6000_0_OR_NEWER
-	[Obsolete]
-#endif
 	public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
 	{
 		base.OnCameraSetup(cmd, ref renderingData);
@@ -88,7 +74,7 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 		RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
 		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
 
-		RenderingUtils.ReAllocateIfNeeded(ref blitRtHandle, cameraTargetDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_CameraFullScreenBlurTarget");
+		RenderingUtils.ReAllocateIfNeeded(ref blitRtHandle, cameraTargetDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_CameraFadeTarget");
 	}
 
 	/// <summary>
@@ -96,26 +82,20 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="context"></param>
 	/// <param name="renderingData"></param>
-#if UNITY_6000_0_OR_NEWER
-	[Obsolete]
-#endif
 	public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 	{
 		CommandBuffer cmd = CommandBufferPool.Get();
 
 		using (new ProfilingScope(cmd, profilingSampler))
 		{
-			FullScreenBlurVolumeComponent fullScreenBlurVolume = VolumeManager.instance.stack.GetComponent<FullScreenBlurVolumeComponent>();
+			CameraFadeVolumeComponent cameraFadeVolume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-			int maxBlurRadius = fullScreenBlurVolume.blurRadius.value;
-			int blurRadius = (int)Mathf.Lerp(2.0f, (float)maxBlurRadius, (float)fullScreenBlurVolume.progress.value);
-
-			fullScreenBlurMaterial.SetInt(KernelRadiusId, fullScreenBlurVolume.blurRadius.value);
-			fullScreenBlurMaterial.SetFloat(BlurStandardDeviationId, (float)blurRadius * 0.5f);
+			cameraFadeMaterial.SetColor(ColorId, cameraFadeVolume.color.value);
+			cameraFadeMaterial.SetFloat(ProgressId, cameraFadeVolume.progress.value);
 
 			RTHandle cameraColorRt = renderingData.cameraData.renderer.cameraColorTargetHandle;
-			Blitter.BlitCameraTexture(cmd, cameraColorRt, blitRtHandle, fullScreenBlurMaterial, 0);
-			Blitter.BlitCameraTexture(cmd, blitRtHandle, cameraColorRt, fullScreenBlurMaterial, 1);
+			Blitter.BlitCameraTexture(cmd, cameraColorRt, blitRtHandle, cameraFadeMaterial, 0);
+			Blitter.BlitCameraTexture(cmd, blitRtHandle, cameraColorRt);
 		}
 
 		context.ExecuteCommandBuffer(cmd);
@@ -139,12 +119,11 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 
 		CreateRenderGraphTextures(renderGraph, cameraData, out TextureHandle blitTextureHandle);
 
-		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("FullScreen Horizontal Blur Pass", out PassData passData, profilingSampler))
+		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Camera Fade Pass", out PassData passData, profilingSampler))
 		{
-			passData.stage = PassStage.HorizontalBlur;
 			passData.source = resourceData.cameraColor;
 			passData.target = blitTextureHandle;
-			passData.material = fullScreenBlurMaterial;
+			passData.material = cameraFadeMaterial;
 			passData.materialPassIndex = 0;
 
 			builder.SetRenderAttachment(blitTextureHandle, 0);
@@ -152,18 +131,7 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
-		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("FullScreen Vertical Blur Pass", out PassData passData, profilingSampler))
-		{
-			passData.stage = PassStage.VerticalBlur;
-			passData.source = blitTextureHandle;
-			passData.target = resourceData.cameraColor;
-			passData.material = fullScreenBlurMaterial;
-			passData.materialPassIndex = 1;
-
-			builder.SetRenderAttachment(resourceData.cameraColor, 0);
-			builder.UseTexture(blitTextureHandle);
-			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
-		}
+		resourceData.cameraColor = blitTextureHandle;
 	}
 
 #endif
@@ -185,7 +153,7 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
 		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
 
-		blitTextureHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_FullScreenBlurTarget", false);
+		blitTextureHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_CameraFade", false);
 	}
 
 	/// <summary>
@@ -195,18 +163,12 @@ public sealed class FullScreenBlurRenderPass : ScriptableRenderPass
 	/// <param name="context"></param>
 	private static void ExecutePass(PassData passData, RasterGraphContext context)
 	{
-		FullScreenBlurVolumeComponent fullScreenBlurVolume = VolumeManager.instance.stack.GetComponent<FullScreenBlurVolumeComponent>();
+		CameraFadeVolumeComponent cameraFadeVolume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-		if (passData.stage == PassStage.HorizontalBlur)
-		{
-			Material fullScreenBlurMaterial = passData.material;
+		Material cameraFadeMaterial = passData.material;
 
-			int maxBlurRadius = fullScreenBlurVolume.blurRadius.value;
-			int blurRadius = (int)Mathf.Lerp(2.0f, (float)maxBlurRadius, (float)fullScreenBlurVolume.progress.value);
-
-			fullScreenBlurMaterial.SetInt(KernelRadiusId, blurRadius);
-			fullScreenBlurMaterial.SetFloat(BlurStandardDeviationId, (float)blurRadius * 0.5f);
-		}
+		cameraFadeMaterial.SetColor(ColorId, cameraFadeVolume.color.value);
+		cameraFadeMaterial.SetFloat(ProgressId, cameraFadeVolume.progress.value);
 
 		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
 	}
