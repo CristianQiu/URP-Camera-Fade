@@ -27,16 +27,14 @@ Shader "Hidden/CameraFade"
             float _Progress;
             float3 _Color;
 
-            SAMPLER(sampler_BlitTexture);
-
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
-                float4 targetColor = float4(_Color, cameraColor.a);
+                float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
+                float3 resultColor = lerp(cameraColor.rgb, _Color, _Progress);
 
-                return lerp(cameraColor, targetColor, _Progress);
+                return float4(resultColor, cameraColor.a);
             }
 
             ENDHLSL
