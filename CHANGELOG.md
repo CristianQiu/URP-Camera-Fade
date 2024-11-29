@@ -1,3 +1,7 @@
+## [1.0.2] - 2024-11-29
+
+* Missing change from 1.0.1 that includes better access texture flags for RG path.
+
 ## [1.0.1] - 2024-11-29
 
 * Minor code cleanup.
