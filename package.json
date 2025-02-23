@@ -6,7 +6,6 @@
   "unity": "2022.3",
   "unityRelease": "18f1",
   "dependencies": {
-    "com.unity.render-pipelines.universal": ""
   },
   "keywords": [
     "camera",
