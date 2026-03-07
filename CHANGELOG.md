@@ -1,3 +1,7 @@
+## [2.0.0] - 2026-03-07
+
+* Unity 6000.3.0 or above is now required. The non rendergraph path is no longer supported.
+
 ## [1.0.3] - 2025-02-23
 
 * Removed empty version dependency as it was throwing errors. User should make sure that they have URP package installed before installing the camera fade package to avoid console errors.

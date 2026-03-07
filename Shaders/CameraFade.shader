@@ -24,8 +24,8 @@ Shader "Hidden/CameraFade"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            float _Progress;
             float3 _Color;
+            float _Progress;
 
             float4 Frag(Varyings input) : SV_Target
             {
@@ -34,7 +34,7 @@ Shader "Hidden/CameraFade"
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
                 float3 resultColor = lerp(cameraColor.rgb, _Color, _Progress);
 
-                return float4(resultColor, cameraColor.a);
+                return float4(resultColor.rgb, cameraColor.a);
             }
 
             ENDHLSL

@@ -15,6 +15,7 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	[SerializeField] private Shader cameraFadeShader;
 
 	private Material cameraFadeMaterial;
+
 	private CameraFadeRenderPass cameraFadeRenderPass;
 
 	#endregion
@@ -53,8 +54,6 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	{
 		base.Dispose(disposing);
 
-		cameraFadeRenderPass?.Dispose();
-
 		CoreUtils.Destroy(cameraFadeMaterial);
 	}
 
@@ -88,13 +87,14 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	/// <returns></returns>
 	private bool ShouldAddCameraFadeRenderPass(CameraType cameraType)
 	{
-		CameraFadeVolumeComponent cameraFadeVolume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
+		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-		bool isVolumeOk = cameraFadeVolume != null && cameraFadeVolume.IsActive();
-		bool isCameraOk = cameraType != CameraType.Preview && cameraType != CameraType.Reflection;
+		bool isVolumeOk = volume != null && volume.IsActive();
+		bool isRenderPassOk = cameraFadeRenderPass != null;
 		bool areResourcesOk = ValidateResourcesForCameraFadeRenderPass(false);
+		bool isCameraOk = cameraType != CameraType.Preview && cameraType != CameraType.Reflection;
 
-		return isActive && isVolumeOk && isCameraOk && areResourcesOk;
+		return isActive && isVolumeOk && isRenderPassOk && areResourcesOk && isCameraOk;
 	}
 
 	#endregion
