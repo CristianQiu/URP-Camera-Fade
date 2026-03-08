@@ -62,8 +62,8 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	{
 		CameraFadeVolumeComponent cameraFadeVolume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-		cameraFadeMaterial?.SetColor(ColorId, cameraFadeVolume.color.value);
-		cameraFadeMaterial?.SetFloat(ProgressId, cameraFadeVolume.progress.value);
+		cameraFadeMaterial.SetColor(ColorId, cameraFadeVolume.color.value);
+		cameraFadeMaterial.SetFloat(ProgressId, cameraFadeVolume.progress.value);
 	}
 
 	/// <summary>
@@ -75,6 +75,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	private TextureHandle CreateRenderGraphTextureHandle(RenderGraph renderGraph, UniversalResourceData resourceData)
 	{
 		TextureDesc cameraColorDescriptor = renderGraph.GetTextureDesc(resourceData.cameraColor);
+		cameraColorDescriptor.clearBuffer = false;
 
 		return renderGraph.CreateTexture(cameraColorDescriptor);
 	}
