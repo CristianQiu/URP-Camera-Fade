@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
@@ -9,6 +8,19 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public sealed class CameraFadeRenderPass : ScriptableRenderPass
 {
+	#region Definitions
+
+	/// <summary>
+	/// Holds the data needed by the execution of the render pass.
+	/// </summary>
+	private class PassData
+	{
+		public Material material;
+		public int materialPassIndex;
+	}
+
+	#endregion
+
 	#region Private Attributes
 
 	private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -40,13 +52,18 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	/// <param name="frameData"></param>
 	public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
 	{
-		UpdateMaterialParameters();
-
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 		TextureHandle blitTextureHandle = CreateRenderGraphTextureHandle(renderGraph, resourceData);
 
-		RenderGraphUtils.BlitMaterialParameters blitParameters = new RenderGraphUtils.BlitMaterialParameters(resourceData.cameraColor, blitTextureHandle, material, 0);
-		RenderGraphUtils.AddBlitPass(renderGraph, blitParameters, "Camera Fade");
+		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Camera Fade", out PassData passData, profilingSampler))
+		{
+			passData.material = material;
+			passData.materialPassIndex = 0;
+
+			builder.SetRenderAttachment(blitTextureHandle, 0, AccessFlags.WriteAll);
+			builder.UseTexture(resourceData.cameraColor);
+			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
+		}
 
 		resourceData.cameraColor = blitTextureHandle;
 	}
@@ -54,17 +71,6 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	#endregion
 
 	#region Methods
-
-	/// <summary>
-	/// Updates the material parameters according to the volume settings.
-	/// </summary>
-	private void UpdateMaterialParameters()
-	{
-		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
-
-		material.SetColor(ColorId, volume.color.value);
-		material.SetFloat(ProgressId, volume.progress.value);
-	}
 
 	/// <summary>
 	/// Creates and returns the necessary render graph texture handle to blit to.
@@ -78,6 +84,30 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 		cameraColorDescriptor.clearBuffer = false;
 
 		return renderGraph.CreateTexture(cameraColorDescriptor);
+	}
+
+	/// <summary>
+	/// Updates the material parameters according to the volume settings.
+	/// </summary>
+	/// <param name="material"></param>
+	private static void UpdateMaterialParameters(Material material)
+	{
+		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
+
+		material.SetColor(ColorId, volume.color.value);
+		material.SetFloat(ProgressId, volume.progress.value);
+	}
+
+	/// <summary>
+	/// Executes the pass with the information from the pass data.
+	/// </summary>
+	/// <param name="passData"></param>
+	/// <param name="context"></param>
+	private static void ExecutePass(PassData passData, RasterGraphContext context)
+	{
+		UpdateMaterialParameters(passData.material);
+
+		Blitter.BlitTexture(context.cmd, Vector2.one, passData.material, passData.materialPassIndex);
 	}
 
 	#endregion

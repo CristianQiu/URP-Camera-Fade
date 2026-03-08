@@ -1,4 +1,4 @@
-## [2.0.0] - 2026-03-07
+## [2.0.0] - 2026-03-08
 
 * Unity 6000.3.0 or above is now required. The non rendergraph path is no longer supported.
 
