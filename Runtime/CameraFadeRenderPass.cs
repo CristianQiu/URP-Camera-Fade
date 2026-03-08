@@ -14,19 +14,19 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	private static readonly int ColorId = Shader.PropertyToID("_Color");
 	private static readonly int ProgressId = Shader.PropertyToID("_Progress");
 
-	private Material cameraFadeMaterial;
+	private Material material;
 
 	#endregion
 
 	#region Initialization Methods
 
-	public CameraFadeRenderPass(Material cameraFadeMaterial) : base()
+	public CameraFadeRenderPass(Material material) : base()
 	{
 		profilingSampler = new ProfilingSampler("Camera Fade");
 		renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 		requiresIntermediateTexture = false;
 
-		this.cameraFadeMaterial = cameraFadeMaterial;
+		this.material = material;
 	}
 
 	#endregion
@@ -45,7 +45,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 		TextureHandle blitTextureHandle = CreateRenderGraphTextureHandle(renderGraph, resourceData);
 
-		RenderGraphUtils.BlitMaterialParameters blitParameters = new RenderGraphUtils.BlitMaterialParameters(resourceData.cameraColor, blitTextureHandle, cameraFadeMaterial, 0);
+		RenderGraphUtils.BlitMaterialParameters blitParameters = new RenderGraphUtils.BlitMaterialParameters(resourceData.cameraColor, blitTextureHandle, material, 0);
 		RenderGraphUtils.AddBlitPass(renderGraph, blitParameters, "Camera Fade");
 
 		resourceData.cameraColor = blitTextureHandle;
@@ -60,10 +60,10 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	/// </summary>
 	private void UpdateMaterialParameters()
 	{
-		CameraFadeVolumeComponent cameraFadeVolume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
+		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-		cameraFadeMaterial.SetColor(ColorId, cameraFadeVolume.color.value);
-		cameraFadeMaterial.SetFloat(ProgressId, cameraFadeVolume.progress.value);
+		material.SetColor(ColorId, volume.color.value);
+		material.SetFloat(ProgressId, volume.progress.value);
 	}
 
 	/// <summary>

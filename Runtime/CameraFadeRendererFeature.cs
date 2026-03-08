@@ -12,11 +12,11 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	#region Private Attributes
 
 	[HideInInspector]
-	[SerializeField] private Shader cameraFadeShader;
+	[SerializeField] private Shader shader;
 
-	private Material cameraFadeMaterial;
+	private Material material;
 
-	private CameraFadeRenderPass cameraFadeRenderPass;
+	private CameraFadeRenderPass renderPass;
 
 	#endregion
 
@@ -27,9 +27,9 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	/// </summary>
 	public override void Create()
 	{
-		ValidateResourcesForCameraFadeRenderPass(true);
+		ValidateResources(true);
 
-		cameraFadeRenderPass = new CameraFadeRenderPass(cameraFadeMaterial);
+		renderPass = new CameraFadeRenderPass(material);
 	}
 
 	/// <summary>
@@ -40,10 +40,10 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
 	{
 		bool isPostProcessEnabled = renderingData.postProcessingEnabled && renderingData.cameraData.postProcessEnabled;
-		bool shouldAddCameraFadeRenderPass = isPostProcessEnabled && ShouldAddCameraFadeRenderPass(renderingData.cameraData.cameraType);
+		bool shouldAddRenderPass = isPostProcessEnabled && ShouldAddRenderPass(renderingData.cameraData.cameraType);
 
-		if (shouldAddCameraFadeRenderPass)
-			renderer.EnqueuePass(cameraFadeRenderPass);
+		if (shouldAddRenderPass)
+			renderer.EnqueuePass(renderPass);
 	}
 
 	/// <summary>
@@ -54,7 +54,7 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	{
 		base.Dispose(disposing);
 
-		CoreUtils.Destroy(cameraFadeMaterial);
+		CoreUtils.Destroy(material);
 	}
 
 	#endregion
@@ -62,36 +62,36 @@ public sealed class CameraFadeRendererFeature : ScriptableRendererFeature
 	#region Methods
 
 	/// <summary>
-	/// Validates the resources used by the camera fade render pass.
+	/// Validates the resources used by the render pass.
 	/// </summary>
 	/// <param name="forceRefresh"></param>
 	/// <returns></returns>
-	private bool ValidateResourcesForCameraFadeRenderPass(bool forceRefresh)
+	private bool ValidateResources(bool forceRefresh)
 	{
 		if (forceRefresh)
 		{
 #if UNITY_EDITOR
-			cameraFadeShader = Shader.Find("Hidden/CameraFade");
+			shader = Shader.Find("Hidden/CameraFade");
 #endif
-			CoreUtils.Destroy(cameraFadeMaterial);
-			cameraFadeMaterial = CoreUtils.CreateEngineMaterial(cameraFadeShader);
+			CoreUtils.Destroy(material);
+			material = CoreUtils.CreateEngineMaterial(shader);
 		}
 
-		return cameraFadeShader != null && cameraFadeMaterial != null;
+		return shader != null && material != null;
 	}
 
 	/// <summary>
-	/// Gets whether the camera fade render pass should be enqueued to the renderer.
+	/// Gets whether the render pass should be enqueued to the renderer.
 	/// </summary>
 	/// <param name="cameraType"></param>
 	/// <returns></returns>
-	private bool ShouldAddCameraFadeRenderPass(CameraType cameraType)
+	private bool ShouldAddRenderPass(CameraType cameraType)
 	{
 		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
 		bool isVolumeOk = volume != null && volume.IsActive();
-		bool isRenderPassOk = cameraFadeRenderPass != null;
-		bool areResourcesOk = ValidateResourcesForCameraFadeRenderPass(false);
+		bool isRenderPassOk = renderPass != null;
+		bool areResourcesOk = ValidateResources(false);
 		bool isCameraOk = cameraType != CameraType.Preview && cameraType != CameraType.Reflection;
 
 		return isActive && isVolumeOk && isRenderPassOk && areResourcesOk && isCameraOk;
