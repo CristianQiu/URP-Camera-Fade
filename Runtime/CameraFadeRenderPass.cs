@@ -15,6 +15,8 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	/// </summary>
 	private class PassData
 	{
+		public TextureHandle source;
+
 		public Material material;
 		public int materialPassIndex;
 	}
@@ -57,6 +59,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Camera Fade", out PassData passData, profilingSampler))
 		{
+			passData.source = resourceData.cameraColor;
 			passData.material = material;
 			passData.materialPassIndex = 0;
 
@@ -107,7 +110,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	{
 		UpdateMaterialParameters(passData.material);
 
-		Blitter.BlitTexture(context.cmd, Vector2.one, passData.material, passData.materialPassIndex);
+		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
 	}
 
 	#endregion
