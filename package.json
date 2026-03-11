@@ -1,7 +1,7 @@
 {
   "name": "com.cqf.camerafade",
   "version": "2.0.0",
-  "displayName": "URP Camera Fade",
+  "displayName": "Camera Fade",
   "description": "Render feature to fade the camera color to or from a color. Unity 6000.3.0 or above is required.",
   "unity": "6000.3",
   "unityRelease": "0f1",
