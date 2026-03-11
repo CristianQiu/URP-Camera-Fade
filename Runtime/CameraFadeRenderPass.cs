@@ -83,10 +83,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	/// <returns></returns>
 	private TextureHandle CreateRenderGraphTextureHandle(RenderGraph renderGraph, UniversalResourceData resourceData)
 	{
-		TextureDesc cameraColorDescriptor = renderGraph.GetTextureDesc(resourceData.cameraColor);
-		cameraColorDescriptor.clearBuffer = false;
-
-		return renderGraph.CreateTexture(cameraColorDescriptor);
+		return renderGraph.CreateTexture(resourceData.cameraColor, "_CameraFade");
 	}
 
 	/// <summary>
