@@ -14,7 +14,7 @@ Shader "Hidden/CameraFade"
             ZTest Always
             ZWrite Off
             Cull Off
-            Blend Off
+            Blend SrcAlpha OneMinusSrcAlpha, Zero One
 
             HLSLPROGRAM
 
@@ -24,17 +24,13 @@ Shader "Hidden/CameraFade"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            float3 _Color;
-            float _Progress;
+            float4 _ColorProgress;
 
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
-                float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
-                float3 resultColor = lerp(cameraColor.rgb, _Color, _Progress);
-
-                return float4(resultColor.rgb, cameraColor.a);
+                
+                return _ColorProgress;
             }
 
             ENDHLSL

@@ -15,8 +15,6 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	/// </summary>
 	private class PassData
 	{
-		public TextureHandle source;
-
 		public Material material;
 		public int materialPassIndex;
 	}
@@ -25,8 +23,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 
 	#region Private Attributes
 
-	private static readonly int ColorId = Shader.PropertyToID("_Color");
-	private static readonly int ProgressId = Shader.PropertyToID("_Progress");
+	private static readonly int ColorProgressId = Shader.PropertyToID("_ColorProgress");
 
 	private Material material;
 
@@ -55,36 +52,20 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
 	{
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-		TextureHandle blitTextureHandle = CreateRenderGraphTextureHandle(renderGraph, resourceData);
 
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Camera Fade", out PassData passData, profilingSampler))
 		{
-			passData.source = resourceData.cameraColor;
 			passData.material = material;
 			passData.materialPassIndex = 0;
 
-			builder.SetRenderAttachment(blitTextureHandle, 0, AccessFlags.WriteAll);
-			builder.UseTexture(resourceData.cameraColor);
+			builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.WriteAll);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
-
-		resourceData.cameraColor = blitTextureHandle;
 	}
 
 	#endregion
 
 	#region Methods
-
-	/// <summary>
-	/// Creates and returns the necessary render graph texture handle to blit to.
-	/// </summary>
-	/// <param name="renderGraph"></param>
-	/// <param name="resourceData"></param>
-	/// <returns></returns>
-	private TextureHandle CreateRenderGraphTextureHandle(RenderGraph renderGraph, UniversalResourceData resourceData)
-	{
-		return renderGraph.CreateTexture(resourceData.cameraColor, "_CameraFade");
-	}
 
 	/// <summary>
 	/// Updates the material parameters according to the volume settings.
@@ -94,8 +75,8 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	{
 		CameraFadeVolumeComponent volume = VolumeManager.instance.stack.GetComponent<CameraFadeVolumeComponent>();
 
-		material.SetColor(ColorId, volume.color.value);
-		material.SetFloat(ProgressId, volume.progress.value);
+		Color color = volume.color.value;
+		material.SetVector(ColorProgressId, new Vector4(color.r, color.g, color.b, volume.progress.value));
 	}
 
 	/// <summary>
@@ -107,7 +88,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 	{
 		UpdateMaterialParameters(passData.material);
 
-		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
+		Blitter.BlitTexture(context.cmd, Vector2.one, passData.material, passData.materialPassIndex);
 	}
 
 	#endregion

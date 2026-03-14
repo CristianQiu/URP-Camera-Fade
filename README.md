@@ -2,7 +2,7 @@
 
 * Unity package that includes a render feature to fade the camera color to or from a color.
 * Integrated with URP volume system.
-* Unity 6000.3.0 or above is required.
+* Unity 6000.3.0f1 or above is required.
 
 # Usage
 
