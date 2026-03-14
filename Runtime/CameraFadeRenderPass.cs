@@ -58,7 +58,7 @@ public sealed class CameraFadeRenderPass : ScriptableRenderPass
 			passData.material = material;
 			passData.materialPassIndex = 0;
 
-			builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.WriteAll);
+			builder.SetRenderAttachment(resourceData.activeColorTexture, 0, AccessFlags.ReadWrite);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 	}
