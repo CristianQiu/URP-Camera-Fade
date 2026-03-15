@@ -1,10 +1,10 @@
 {
   "name": "com.cqf.camerafade",
-  "version": "1.0.0",
   "displayName": "Camera Fade",
-  "description": "Unity package that includes a render feature to fade the camera color to or from a color.",
+  "version": "1.0.0",
   "unity": "6000.3",
   "unityRelease": "0f1",
+  "description": "Unity package that includes a render feature to fade the camera color to or from a color.",
   "keywords": [
     "camera",
     "fade"
