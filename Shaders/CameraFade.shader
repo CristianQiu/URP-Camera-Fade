@@ -24,9 +24,9 @@ Shader "Hidden/CameraFade"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            float4 _ColorProgress;
+            half4 _ColorProgress;
 
-            float4 Frag(Varyings input) : SV_Target
+            half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 
